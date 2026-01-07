@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodasek | Dev Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- MODAL -->
+    <div id="new-item-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>Co chceš vytvořit?</h2>
+            <div class="modal-actions">
+                <button class="modal-btn code-choice" id="create-code-choice">
+                    <span class="big-icon">💻</span>
+                    <span>Code Snippet</span>
+                </button>
+                <button class="modal-btn prompt-choice" id="create-prompt-choice">
+                    <span class="big-icon">✨</span>
+                    <span>AI Prompt</span>
+                </button>
+            </div>
+            <button class="modal-close" id="close-modal">Zrušit</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">⚡</div>
+                <h1 class="logo-text">Kodasek</h1>
+            </div>
+
+            <!-- Tlačítko Nový -->
+            <button id="global-new-btn" class="btn-global-new">
+                <span>➕</span> Nový záznam
+            </button>
+
+            <!-- Přepínač Tabů (Určuje, který panel vidím) -->
+            <div class="nav-menu">
+                <button class="nav-btn active" onclick="switchTab('code')">
+                    <span class="icon">💻</span> Code
+                </button>
+                <button class="nav-btn" onclick="switchTab('prompts')">
+                    <span class="icon">✨</span> Prompts
+                </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- PANEL: KÓDY (Obsahuje vlastní hledání a list) -->
+            <div id="sidebar-code-panel" class="sidebar-panel active-panel">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-code" placeholder="Hledat v kódech...">
+                </div>
+                <h3 class="list-heading">Knihovna Kódů</h3>
+                <div id="code-list" class="saved-items-list">
+                    <div class="loader">Načítám kódy...</div>
+                </div>
+            </div>
+
+            <!-- PANEL: PROMPTY (Obsahuje vlastní hledání a list) -->
+            <div id="sidebar-prompt-panel" class="sidebar-panel hidden-panel">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-prompt" placeholder="Hledat v promptech...">
+                </div>
+                <h3 class="list-heading">Knihovna Promptů</h3>
+                <div id="prompt-list" class="saved-items-list">
+                    <div class="loader">Načítám prompty...</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- HLAVNÍ OBSAH (Zůstává stejný, jen se přepíná viditelnost) -->
+        <main class="main-content">
+            
+            <!-- CODE SECTION -->
+            <section id="code-section" class="content-section active-section">
+                <header class="top-bar glass-panel">
+                    <div class="top-left">
+                        <div class="input-group">
+                            <span class="input-icon">🏷️</span>
+                            <input type="text" id="snippet-title" placeholder="Název projektu..." class="input-title">
+                        </div>
+                        <div class="tags-mini-input">
+                            <span class="hash">#</span>
+                            <input type="text" id="code-tags" placeholder="html, css...">
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-icon danger" id="delete-snippet-btn" title="Smazat" style="display: none;">🗑️</button>
+                        <button class="btn-primary" id="save-snippet-btn">💾 Uložit</button>
+                    </div>
+                </header>
+
+                <div class="editor-grid">
+                    <div class="editor-pane code-block-style">
+                        <div class="pane-header">
+                            <span><span class="dot html-dot"></span> HTML</span>
+                            <button class="copy-btn" onclick="copyToClipboard('html-code', this)">📋</button>
+                        </div>
+                        <textarea id="html-code" placeholder="<!-- HTML structure -->"></textarea>
+                    </div>
+                    <div class="editor-pane code-block-style">
+                        <div class="pane-header">
+                            <span><span class="dot css-dot"></span> CSS</span>
+                            <button class="copy-btn" onclick="copyToClipboard('css-code', this)">📋</button>
+                        </div>
+                        <textarea id="css-code" placeholder="/* CSS styles */"></textarea>
+                    </div>
+                    <div class="editor-pane code-block-style">
+                        <div class="pane-header">
+                            <span><span class="dot js-dot"></span> JS</span>
+                            <button class="copy-btn" onclick="copyToClipboard('js-code', this)">📋</button>
+                        </div>
+                        <textarea id="js-code" placeholder="// JavaScript logic"></textarea>
+                    </div>
+                </div>
+
+                <div class="preview-wrapper">
+                    <div class="pane-header">👁️ Output</div>
+                    <iframe id="preview-frame"></iframe>
+                </div>
+            </section>
+
+            <!-- PROMPTS SECTION -->
+            <section id="prompts-section" class="content-section hidden-section">
+                <header class="top-bar glass-panel">
+                    <div class="top-left">
+                        <div class="input-group">
+                            <span class="input-icon">💡</span>
+                            <input type="text" id="prompt-title" placeholder="Název promptu..." class="input-title">
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-icon danger" id="delete-prompt-btn" title="Smazat" style="display: none;">🗑️</button>
+                        <button class="btn-primary" id="save-prompt-btn">💾 Uložit</button>
+                    </div>
+                </header>
+
+                <div class="prompt-card glass-panel">
+                    <div class="prompt-container code-block-style full-height">
+                        <div class="pane-header">
+                            <span>📜 Prompt Content</span>
+                            <button class="copy-btn" onclick="copyToClipboard('prompt-content', this)">📋</button>
+                        </div>
+                        <textarea id="prompt-content" class="prompt-area" placeholder="Zde napiš svůj detailní prompt..."></textarea>
+                    </div>
+                    
+                    <div class="tags-wrapper mt-2">
+                        <span class="tag-icon">#️⃣</span>
+                        <input type="text" id="prompt-tags" placeholder="Tagy (midjourney, gpt-4)...">
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
