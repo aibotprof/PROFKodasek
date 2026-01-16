@@ -4,8 +4,664 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kodasek | Dev Studio</title>
-    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --bg-app: #0d1117;
+    --sidebar-bg: #161b22;
+    --panel-bg: #161b22;
+    --code-bg: #010409;
+    --primary: #58a6ff;
+    --primary-hover: #1f6feb;
+    --accent: #bc8cff;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border: #30363d;
+    --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container { display: flex; height: 100%; }
+
+/* SIDEBAR */
+.sidebar {
+    width: 280px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.logo-icon { font-size: 1.5rem; }
+.logo-text {
+    font-size: 1.4rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-global-new {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(88, 166, 255, 0.2);
+    transition: transform 0.2s;
+}
+.btn-global-new:hover { transform: translateY(-2px); }
+
+.search-box {
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+.search-box input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+}
+
+.nav-menu { display: flex; gap: 5px; margin-bottom: 10px; }
+.nav-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.2s;
+}
+.nav-btn.active {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.divider { height: 1px; background: var(--border); margin: 15px 0; }
+
+.sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.hidden-panel { display: none !important; }
+
+.active-panel {
+    display: flex !important;
+    animation: fadeIn 0.3s ease;
+}
+
+.list-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin: 15px 0 10px 0;
+    font-weight: 700;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.saved-items-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.saved-item {
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.saved-item:hover { background: rgba(255,255,255,0.05); }
+.saved-item.selected {
+    background: rgba(88, 166, 255, 0.1);
+    border-color: var(--primary);
+}
+.tag-badge {
+    background: #21262d;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    margin-right: 4px;
+}
+
+/* MODAL */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
+.modal-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    padding: 30px;
+    border-radius: 16px;
+    width: 400px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.modal-actions { display: flex; gap: 15px; margin: 25px 0; }
+.modal-btn {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-app);
+    color: var(--text-main);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.modal-btn:hover {
+    border-color: var(--primary);
+    background: rgba(88, 166, 255, 0.05);
+}
+.big-icon { font-size: 2rem; }
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* MAIN CONTENT */
+.main-content {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+}
+.content-section { display: none; }
+.active-section { display: block; }
+.hidden-section { display: none; }
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 15px;
+}
+.top-left {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+    min-width: 200px;
+}
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+.input-title {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    width: 100%;
+    outline: none;
+}
+.tags-mini-input {
+    background: var(--bg-app);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+}
+.tags-mini-input input {
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    width: 100px;
+}
+
+/* TAGS INPUT SYSTEM */
+.tags-input-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-app);
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    min-width: 200px;
+    flex: 1;
+}
+.tags-input-wrapper:focus-within {
+    border-color: var(--primary);
+}
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.2), rgba(188, 140, 255, 0.2));
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.tag-chip .tag-remove {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+.tag-chip .tag-remove:hover {
+    opacity: 1;
+    color: #ff7b72;
+}
+.tags-input-wrapper input {
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    flex: 1;
+    min-width: 80px;
+    font-size: 0.85rem;
+}
+.tags-input-wrapper input::placeholder {
+    color: var(--text-muted);
+}
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #000;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-icon.danger {
+    background: rgba(255,0,0,0.1);
+    color: #ff7b72;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* NOTES BLOCK */
+.notes-block {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 15px;
+}
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.notes-header span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.notes-textarea {
+    width: 100%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+}
+.notes-textarea:focus {
+    border-color: var(--primary);
+}
+.notes-save-indicator {
+    font-size: 0.75rem;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.notes-save-indicator.visible { opacity: 1; }
+
+/* EDITOR BLOCKS */
+.editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    height: 300px;
+    margin-bottom: 15px;
+}
+.code-block-style {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.pane-header {
+    background: #21262d;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono';
+    font-weight: bold;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.copy-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.6;
+}
+.copy-btn:hover { opacity: 1; transform: scale(1.1); }
+textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 15px;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+.html-dot { background: #e34c26; }
+.css-dot { background: #264de4; }
+.js-dot { background: #f7df1e; }
+
+/* PREVIEW */
+.preview-wrapper {
+    background: white;
+    border-radius: var(--radius);
+    height: 350px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.preview-header {
+    background: #21262d;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+.preview-header span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono';
+    font-weight: bold;
+}
+.btn-run {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+.btn-run:hover { background: #2ea043; }
+iframe {
+    border: none;
+    flex: 1;
+    background: white;
+}
+.preview-placeholder {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* PROMPTS */
+.prompt-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px;
+}
+.full-height {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+.prompt-area {
+    font-family: 'JetBrains Mono';
+    font-size: 1rem;
+    color: #a5d6ff;
+}
+.tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-app);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 15px;
+    border: 1px solid var(--border);
+}
+.tags-wrapper:focus-within {
+    border-color: var(--primary);
+}
+.tags-wrapper .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.tags-wrapper input {
+    background: transparent;
+    border: none;
+    color: white;
+    flex: 1;
+    min-width: 120px;
+    outline: none;
+    font-size: 0.85rem;
+}
+
+/* MOBILE TOGGLE */
+.mobile-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 4px 15px rgba(88, 166, 255, 0.4);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .editor-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .editor-grid .code-block-style {
+        height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 999;
+        transform: translateX(-100%);
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-overlay.open { display: block; }
+
+    .mobile-toggle { display: flex; justify-content: center; align-items: center; }
+
+    .main-content { padding: 15px; }
+
+    .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .top-left {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .tags-mini-input { width: 100%; }
+    .tags-mini-input input { width: 100%; }
+    .actions {
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .editor-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .editor-grid .code-block-style {
+        height: 180px;
+    }
+
+    .preview-wrapper { height: 300px; }
+
+    .modal-actions { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+    .brand { justify-content: center; }
+    .logo-text { font-size: 1.2rem; }
+    .input-title { font-size: 1rem; }
+    .btn-primary { padding: 8px 12px; font-size: 0.85rem; }
+}
+
+.loader {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+    </style>
 </head>
 <body>
 
@@ -27,32 +683,36 @@
         </div>
     </div>
 
+    <!-- MOBILE SIDEBAR OVERLAY -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- MOBILE TOGGLE -->
+    <button id="mobile-toggle" class="mobile-toggle">☰</button>
+
     <div class="app-container">
         <!-- SIDEBAR -->
-        <nav class="sidebar">
+        <nav id="sidebar" class="sidebar">
             <div class="brand">
                 <div class="logo-icon">⚡</div>
                 <h1 class="logo-text">Kodasek</h1>
             </div>
 
-            <!-- Tlačítko Nový -->
             <button id="global-new-btn" class="btn-global-new">
                 <span>➕</span> Nový záznam
             </button>
 
-            <!-- Přepínač Tabů (Určuje, který panel vidím) -->
             <div class="nav-menu">
-                <button class="nav-btn active" onclick="switchTab('code')">
+                <button class="nav-btn active" id="nav-code-btn">
                     <span class="icon">💻</span> Code
                 </button>
-                <button class="nav-btn" onclick="switchTab('prompts')">
+                <button class="nav-btn" id="nav-prompt-btn">
                     <span class="icon">✨</span> Prompts
                 </button>
             </div>
 
             <div class="divider"></div>
 
-            <!-- PANEL: KÓDY (Obsahuje vlastní hledání a list) -->
+            <!-- PANEL: KÓDY -->
             <div id="sidebar-code-panel" class="sidebar-panel active-panel">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
@@ -64,7 +724,7 @@
                 </div>
             </div>
 
-            <!-- PANEL: PROMPTY (Obsahuje vlastní hledání a list) -->
+            <!-- PANEL: PROMPTY -->
             <div id="sidebar-prompt-panel" class="sidebar-panel hidden-panel">
                 <div class="search-box">
                     <span class="search-icon">🔍</span>
@@ -77,7 +737,7 @@
             </div>
         </nav>
 
-        <!-- HLAVNÍ OBSAH (Zůstává stejný, jen se přepíná viditelnost) -->
+        <!-- HLAVNÍ OBSAH -->
         <main class="main-content">
             
             <!-- CODE SECTION -->
@@ -88,9 +748,10 @@
                             <span class="input-icon">🏷️</span>
                             <input type="text" id="snippet-title" placeholder="Název projektu..." class="input-title">
                         </div>
-                        <div class="tags-mini-input">
-                            <span class="hash">#</span>
-                            <input type="text" id="code-tags" placeholder="html, css...">
+                        <div class="tags-input-wrapper">
+                            <div class="tags-container" id="code-tags-container"></div>
+                            <input type="text" id="code-tags-input" placeholder="Přidej tag + Enter">
+                            <input type="hidden" id="code-tags">
                         </div>
                     </div>
                     <div class="actions">
@@ -99,33 +760,48 @@
                     </div>
                 </header>
 
+                <!-- POZNÁMKY -->
+                <div class="notes-block">
+                    <div class="notes-header">
+                        <span>📝 Poznámky</span>
+                        <span id="code-notes-indicator" class="notes-save-indicator">Uloženo ✓</span>
+                    </div>
+                    <textarea id="code-notes" class="notes-textarea" placeholder="Poznámky k projektu..."></textarea>
+                </div>
+
                 <div class="editor-grid">
                     <div class="editor-pane code-block-style">
                         <div class="pane-header">
                             <span><span class="dot html-dot"></span> HTML</span>
-                            <button class="copy-btn" onclick="copyToClipboard('html-code', this)">📋</button>
+                            <button class="copy-btn" id="copy-html">📋</button>
                         </div>
                         <textarea id="html-code" placeholder="<!-- HTML structure -->"></textarea>
                     </div>
                     <div class="editor-pane code-block-style">
                         <div class="pane-header">
                             <span><span class="dot css-dot"></span> CSS</span>
-                            <button class="copy-btn" onclick="copyToClipboard('css-code', this)">📋</button>
+                            <button class="copy-btn" id="copy-css">📋</button>
                         </div>
                         <textarea id="css-code" placeholder="/* CSS styles */"></textarea>
                     </div>
                     <div class="editor-pane code-block-style">
                         <div class="pane-header">
                             <span><span class="dot js-dot"></span> JS</span>
-                            <button class="copy-btn" onclick="copyToClipboard('js-code', this)">📋</button>
+                            <button class="copy-btn" id="copy-js">📋</button>
                         </div>
                         <textarea id="js-code" placeholder="// JavaScript logic"></textarea>
                     </div>
                 </div>
 
                 <div class="preview-wrapper">
-                    <div class="pane-header">👁️ Output</div>
-                    <iframe id="preview-frame"></iframe>
+                    <div class="preview-header">
+                        <span>👁️ Output</span>
+                        <button class="btn-run" id="run-preview-btn">▶️ Spustit</button>
+                    </div>
+                    <iframe id="preview-frame" style="display:none;"></iframe>
+                    <div id="preview-placeholder" class="preview-placeholder">
+                        Klikni na "Spustit" pro zobrazení výstupu
+                    </div>
                 </div>
             </section>
 
@@ -144,18 +820,29 @@
                     </div>
                 </header>
 
-                <div class="prompt-card glass-panel">
+                <!-- POZNÁMKY pro prompty -->
+                <div class="notes-block">
+                    <div class="notes-header">
+                        <span>📝 Poznámky</span>
+                        <span id="prompt-notes-indicator" class="notes-save-indicator">Uloženo ✓</span>
+                    </div>
+                    <textarea id="prompt-notes" class="notes-textarea" placeholder="Poznámky k promptu..."></textarea>
+                </div>
+
+                <div class="prompt-card">
                     <div class="prompt-container code-block-style full-height">
                         <div class="pane-header">
                             <span>📜 Prompt Content</span>
-                            <button class="copy-btn" onclick="copyToClipboard('prompt-content', this)">📋</button>
+                            <button class="copy-btn" id="copy-prompt">📋</button>
                         </div>
                         <textarea id="prompt-content" class="prompt-area" placeholder="Zde napiš svůj detailní prompt..."></textarea>
                     </div>
                     
-                    <div class="tags-wrapper mt-2">
+                    <div class="tags-wrapper">
                         <span class="tag-icon">#️⃣</span>
-                        <input type="text" id="prompt-tags" placeholder="Tagy (midjourney, gpt-4)...">
+                        <div class="tags-container" id="prompt-tags-container"></div>
+                        <input type="text" id="prompt-tags-input" placeholder="Přidej tag + Enter">
+                        <input type="hidden" id="prompt-tags">
                     </div>
                 </div>
             </section>
@@ -163,6 +850,441 @@
         </main>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS50ENCdaGoMdCPweuRS7SD6MQaLHc3Bg",
+            authDomain: "profcoder-68e74.firebaseapp.com",
+            databaseURL: "https://profcoder-68e74-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "profcoder-68e74",
+            storageBucket: "profcoder-68e74.firebasestorage.app",
+            messagingSenderId: "990726415994",
+            appId: "1:990726415994:web:1140b4b34296db7506bdc3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // State
+        let currentTab = 'code';
+        let currentEditingId = null;
+        let allCodes = [];
+        let allPrompts = [];
+        let previewActive = false;
+
+        // Tags System
+        const createTagsManager = (inputId, containerId, hiddenId) => {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(containerId);
+            const hidden = document.getElementById(hiddenId);
+            let tags = [];
+
+            const render = () => {
+                container.innerHTML = '';
+                tags.forEach((tag, index) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag-chip';
+                    chip.innerHTML = `#${tag}<span class="tag-remove" data-index="${index}">×</span>`;
+                    container.appendChild(chip);
+                });
+                hidden.value = tags.join(',');
+            };
+
+            const addTag = (value) => {
+                const tag = value.trim().toLowerCase().replace(/^#/, '');
+                if (tag && !tags.includes(tag)) {
+                    tags.push(tag);
+                    render();
+                }
+            };
+
+            const removeTag = (index) => {
+                tags.splice(index, 1);
+                render();
+            };
+
+            const setTags = (tagsString) => {
+                tags = tagsString ? tagsString.split(',').map(t => t.trim()).filter(t => t) : [];
+                render();
+            };
+
+            const getTags = () => tags.join(',');
+
+            const clear = () => {
+                tags = [];
+                render();
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addTag(input.value);
+                    input.value = '';
+                }
+                if (e.key === 'Backspace' && !input.value && tags.length > 0) {
+                    removeTag(tags.length - 1);
+                }
+            });
+
+            input.addEventListener('blur', () => {
+                if (input.value.trim()) {
+                    addTag(input.value);
+                    input.value = '';
+                }
+            });
+
+            container.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-remove')) {
+                    removeTag(parseInt(e.target.dataset.index));
+                }
+            });
+
+            return { setTags, getTags, clear, render };
+        };
+
+        const codeTagsManager = createTagsManager('code-tags-input', 'code-tags-container', 'code-tags');
+        const promptTagsManager = createTagsManager('prompt-tags-input', 'prompt-tags-container', 'prompt-tags');
+
+        // Elements
+        const sidebarCodePanel = document.getElementById('sidebar-code-panel');
+        const sidebarPromptPanel = document.getElementById('sidebar-prompt-panel');
+        const searchCodeInput = document.getElementById('search-code');
+        const searchPromptInput = document.getElementById('search-prompt');
+        const codeSec = document.getElementById('code-section');
+        const promptSec = document.getElementById('prompts-section');
+        const codeList = document.getElementById('code-list');
+        const promptList = document.getElementById('prompt-list');
+        const htmlInput = document.getElementById('html-code');
+        const cssInput = document.getElementById('css-code');
+        const jsInput = document.getElementById('js-code');
+        const previewFrame = document.getElementById('preview-frame');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const mobileToggle = document.getElementById('mobile-toggle');
+
+        // Mobile sidebar toggle
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('open');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('open');
+        });
+
+        // Close sidebar on item select (mobile)
+        const closeSidebarMobile = () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            }
+        };
+
+        // Switch Tab
+        const switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+            if (tab === 'code') {
+                document.getElementById('nav-code-btn').classList.add('active');
+                sidebarCodePanel.classList.remove('hidden-panel');
+                sidebarCodePanel.classList.add('active-panel');
+                sidebarPromptPanel.classList.remove('active-panel');
+                sidebarPromptPanel.classList.add('hidden-panel');
+                codeSec.className = 'content-section active-section';
+                promptSec.className = 'content-section hidden-section';
+                renderList(allCodes, codeList, 'code', searchCodeInput.value);
+            } else {
+                document.getElementById('nav-prompt-btn').classList.add('active');
+                sidebarPromptPanel.classList.remove('hidden-panel');
+                sidebarPromptPanel.classList.add('active-panel');
+                sidebarCodePanel.classList.remove('active-panel');
+                sidebarCodePanel.classList.add('hidden-panel');
+                promptSec.className = 'content-section active-section';
+                codeSec.className = 'content-section hidden-section';
+                renderList(allPrompts, promptList, 'prompt', searchPromptInput.value);
+            }
+        };
+
+        document.getElementById('nav-code-btn').addEventListener('click', () => switchTab('code'));
+        document.getElementById('nav-prompt-btn').addEventListener('click', () => switchTab('prompts'));
+
+        // Search listeners
+        searchCodeInput.addEventListener('input', (e) => {
+            renderList(allCodes, codeList, 'code', e.target.value);
+        });
+
+        searchPromptInput.addEventListener('input', (e) => {
+            renderList(allPrompts, promptList, 'prompt', e.target.value);
+        });
+
+        // Modal
+        const modal = document.getElementById('new-item-modal');
+        document.getElementById('global-new-btn').onclick = () => modal.classList.add('open');
+        document.getElementById('close-modal').onclick = () => modal.classList.remove('open');
+        modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('open'); };
+
+        document.getElementById('create-code-choice').onclick = () => {
+            modal.classList.remove('open');
+            switchTab('code');
+            resetForm();
+        };
+        document.getElementById('create-prompt-choice').onclick = () => {
+            modal.classList.remove('open');
+            switchTab('prompts');
+            resetForm();
+        };
+
+        // Copy functions
+        const copyToClipboard = (elementId, btnElement) => {
+            const text = document.getElementById(elementId).value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btnElement.innerHTML;
+                btnElement.innerHTML = "✅";
+                setTimeout(() => btnElement.innerHTML = original, 1500);
+            });
+        };
+
+        document.getElementById('copy-html').onclick = function() { copyToClipboard('html-code', this); };
+        document.getElementById('copy-css').onclick = function() { copyToClipboard('css-code', this); };
+        document.getElementById('copy-js').onclick = function() { copyToClipboard('js-code', this); };
+        document.getElementById('copy-prompt').onclick = function() { copyToClipboard('prompt-content', this); };
+
+        // Preview - pouze na tlačítko
+        const runPreviewBtn = document.getElementById('run-preview-btn');
+        
+        const runPreview = () => {
+            const html = htmlInput.value;
+            const css = `<style>${cssInput.value}</style>`;
+            const js = `<script>${jsInput.value}<\/script>`;
+            const content = `<!DOCTYPE html><html><head><meta charset="utf-8">${css}</head><body>${html}${js}</body></html>`;
+            
+            previewFrame.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+            
+            const doc = previewFrame.contentWindow.document;
+            doc.open();
+            doc.write(content);
+            doc.close();
+            
+            previewActive = true;
+        };
+
+        runPreviewBtn.addEventListener('click', runPreview);
+
+        // Reset preview when code changes
+        const resetPreviewState = () => {
+            if (previewActive) {
+                previewFrame.style.display = 'none';
+                previewPlaceholder.style.display = 'flex';
+                previewPlaceholder.textContent = 'Kód změněn - klikni na "Spustit" pro aktualizaci';
+                previewActive = false;
+            }
+        };
+
+        [htmlInput, cssInput, jsInput].forEach(el => {
+            el.addEventListener('input', resetPreviewState);
+        });
+
+        // Reset Form
+        const resetForm = () => {
+            currentEditingId = null;
+            
+            // Code
+            document.getElementById('snippet-title').value = "";
+            codeTagsManager.clear();
+            document.getElementById('code-notes').value = "";
+            htmlInput.value = "";
+            cssInput.value = "";
+            jsInput.value = "";
+            
+            // Reset preview
+            previewFrame.style.display = 'none';
+            previewPlaceholder.style.display = 'flex';
+            previewPlaceholder.textContent = 'Klikni na "Spustit" pro zobrazení výstupu';
+            previewActive = false;
+            
+            document.getElementById('save-snippet-btn').innerHTML = "💾 Uložit";
+            document.getElementById('delete-snippet-btn').style.display = "none";
+            
+            // Prompt
+            document.getElementById('prompt-title').value = "";
+            promptTagsManager.clear();
+            document.getElementById('prompt-notes').value = "";
+            document.getElementById('prompt-content').value = "";
+            document.getElementById('save-prompt-btn').innerHTML = "💾 Uložit";
+            document.getElementById('delete-prompt-btn').style.display = "none";
+            
+            document.querySelectorAll('.saved-item').forEach(el => el.classList.remove('selected'));
+        };
+
+        // Save Code
+        document.getElementById('save-snippet-btn').onclick = async () => {
+            const title = document.getElementById('snippet-title').value;
+            if(!title) return alert("Chybí název!");
+            
+            const btn = document.getElementById('save-snippet-btn');
+            btn.innerHTML = "⏳...";
+            
+            const data = {
+                title,
+                tags: codeTagsManager.getTags(),
+                notes: document.getElementById('code-notes').value,
+                html: htmlInput.value,
+                css: cssInput.value,
+                js: jsInput.value
+            };
+            
+            if(!currentEditingId) data.createdAt = Date.now();
+
+            try {
+                if(currentEditingId) {
+                    await update(ref(db, 'codes/' + currentEditingId), data);
+                } else {
+                    await set(push(ref(db, 'codes')), data);
+                }
+                btn.innerHTML = "✅ OK";
+                setTimeout(() => btn.innerHTML = "💾 Uložit", 1500);
+                resetForm();
+            } catch(e) {
+                console.error(e);
+                btn.innerHTML = "❌ Chyba";
+                setTimeout(() => btn.innerHTML = "💾 Uložit", 1500);
+            }
+        };
+
+        // Save Prompt
+        document.getElementById('save-prompt-btn').onclick = async () => {
+            const title = document.getElementById('prompt-title').value;
+            const content = document.getElementById('prompt-content').value;
+            if(!title || !content) return alert("Chybí údaje!");
+            
+            const btn = document.getElementById('save-prompt-btn');
+            btn.innerHTML = "⏳...";
+            
+            const data = {
+                title,
+                tags: promptTagsManager.getTags(),
+                notes: document.getElementById('prompt-notes').value,
+                content
+            };
+            
+            if(!currentEditingId) data.createdAt = Date.now();
+
+            try {
+                if(currentEditingId) {
+                    await update(ref(db, 'prompts/' + currentEditingId), data);
+                } else {
+                    await set(push(ref(db, 'prompts')), data);
+                }
+                btn.innerHTML = "✅ OK";
+                setTimeout(() => btn.innerHTML = "💾 Uložit", 1500);
+                resetForm();
+            } catch(e) {
+                console.error(e);
+                btn.innerHTML = "❌ Chyba";
+                setTimeout(() => btn.innerHTML = "💾 Uložit", 1500);
+            }
+        };
+
+        // Delete
+        const deleteItem = async (type) => {
+            if(!currentEditingId || !confirm("Smazat?")) return;
+            await remove(ref(db, `${type}/${currentEditingId}`));
+            resetForm();
+        };
+        
+        document.getElementById('delete-snippet-btn').onclick = () => deleteItem('codes');
+        document.getElementById('delete-prompt-btn').onclick = () => deleteItem('prompts');
+
+        // Load Item
+        const loadItem = (id, data, type) => {
+            currentEditingId = id;
+            document.querySelectorAll('.saved-item').forEach(el => el.classList.remove('selected'));
+            const el = document.getElementById(`item-${id}`);
+            if(el) el.classList.add('selected');
+
+            if (type === 'code') {
+                document.getElementById('snippet-title').value = data.title;
+                codeTagsManager.setTags(data.tags || "");
+                document.getElementById('code-notes').value = data.notes || "";
+                htmlInput.value = data.html || "";
+                cssInput.value = data.css || "";
+                jsInput.value = data.js || "";
+                
+                // Reset preview state
+                previewFrame.style.display = 'none';
+                previewPlaceholder.style.display = 'flex';
+                previewPlaceholder.textContent = 'Klikni na "Spustit" pro zobrazení výstupu';
+                previewActive = false;
+                
+                document.getElementById('save-snippet-btn').innerHTML = "💾 Aktualizovat";
+                document.getElementById('delete-snippet-btn').style.display = "block";
+            } else {
+                document.getElementById('prompt-title').value = data.title;
+                promptTagsManager.setTags(data.tags || "");
+                document.getElementById('prompt-notes').value = data.notes || "";
+                document.getElementById('prompt-content').value = data.content;
+                document.getElementById('save-prompt-btn').innerHTML = "💾 Aktualizovat";
+                document.getElementById('delete-prompt-btn').style.display = "block";
+            }
+            
+            closeSidebarMobile();
+        };
+
+        // Render List
+        const renderList = (items, container, type, searchTerm = "") => {
+            container.innerHTML = "";
+            const query = searchTerm.toLowerCase();
+            
+            const filtered = items.filter(item => 
+                item.title.toLowerCase().includes(query) || 
+                (item.tags && item.tags.toLowerCase().includes(query))
+            );
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="padding:10px; opacity:0.5; font-size:0.8rem;">Žádné výsledky</div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'saved-item';
+                div.id = `item-${item.id}`;
+                if(currentEditingId === item.id) div.classList.add('selected');
+
+                let tagsHtml = '';
+                if(item.tags) {
+                    item.tags.split(',').slice(0, 3).forEach(t => {
+                        if(t.trim()) tagsHtml += `<span class="tag-badge">#${t.trim()}</span>`;
+                    });
+                }
+
+                div.innerHTML = `<strong>${item.title}</strong><div style="margin-top:4px;">${tagsHtml}</div>`;
+                div.onclick = () => loadItem(item.id, item, type);
+                container.appendChild(div);
+            });
+        };
+
+        // Data Listeners
+        onValue(ref(db, 'codes'), (snap) => {
+            allCodes = snap.val() 
+                ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
+                : [];
+            if(currentTab === 'code') renderList(allCodes, codeList, 'code', searchCodeInput.value);
+        });
+
+        onValue(ref(db, 'prompts'), (snap) => {
+            allPrompts = snap.val() 
+                ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
+                : [];
+            if(currentTab === 'prompts') renderList(allPrompts, promptList, 'prompt', searchPromptInput.value);
+        });
+    </script>
 </body>
 </html>
