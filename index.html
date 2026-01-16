@@ -463,12 +463,13 @@ textarea {
 
 /* PREVIEW */
 .preview-wrapper {
-    background: white;
+    background: var(--panel-bg);
     border-radius: var(--radius);
-    height: 350px;
+    min-height: 400px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border: 1px solid var(--border);
 }
 .preview-header {
     background: #21262d;
@@ -477,12 +478,18 @@ textarea {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
 .preview-header span {
     font-size: 0.75rem;
     color: var(--text-muted);
     font-family: 'JetBrains Mono';
     font-weight: bold;
+}
+.preview-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 .btn-run {
     background: #238636;
@@ -499,19 +506,50 @@ textarea {
     transition: background 0.2s;
 }
 .btn-run:hover { background: #2ea043; }
-iframe {
+.btn-clear-preview {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-muted);
     border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+.btn-clear-preview:hover {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+.preview-frame-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     background: white;
+    overflow: auto;
+    position: relative;
+}
+iframe#preview-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 350px;
+    border: none;
+    background: white;
+    display: block;
 }
 .preview-placeholder {
-    flex: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #f0f0f0;
+    background: #f5f5f5;
     color: #666;
     font-size: 0.9rem;
+    text-align: center;
+    padding: 20px;
 }
 
 /* PROMPTS */
@@ -796,11 +834,16 @@ iframe {
                 <div class="preview-wrapper">
                     <div class="preview-header">
                         <span>👁️ Output</span>
-                        <button class="btn-run" id="run-preview-btn">▶️ Spustit</button>
+                        <div class="preview-controls">
+                            <button class="btn-clear-preview" id="clear-preview-btn">Vyčistit</button>
+                            <button class="btn-run" id="run-preview-btn">▶️ Spustit</button>
+                        </div>
                     </div>
-                    <iframe id="preview-frame" style="display:none;"></iframe>
-                    <div id="preview-placeholder" class="preview-placeholder">
-                        Klikni na "Spustit" pro zobrazení výstupu
+                    <div class="preview-frame-container">
+                        <iframe id="preview-frame"></iframe>
+                        <div id="preview-placeholder" class="preview-placeholder">
+                            Klikni na "Spustit" pro zobrazení výstupu
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1057,33 +1100,91 @@ iframe {
 
         // Preview - pouze na tlačítko
         const runPreviewBtn = document.getElementById('run-preview-btn');
+        const clearPreviewBtn = document.getElementById('clear-preview-btn');
         
         const runPreview = () => {
             const html = htmlInput.value;
-            const css = `<style>${cssInput.value}</style>`;
-            const js = `<script>${jsInput.value}<\/script>`;
-            const content = `<!DOCTYPE html><html><head><meta charset="utf-8">${css}</head><body>${html}${js}</body></html>`;
+            const css = cssInput.value;
+            const js = jsInput.value;
             
-            previewFrame.style.display = 'block';
+            // Kompletní HTML dokument s proper viewport a reset
+            const content = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Reset pro čistý výstup */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+        }
+        /* User CSS */
+        ${css}
+    </style>
+</head>
+<body>
+    ${html}
+    <script>${js}<\/script>
+</body>
+</html>`;
+            
             previewPlaceholder.style.display = 'none';
+            previewFrame.style.display = 'block';
             
             const doc = previewFrame.contentWindow.document;
             doc.open();
             doc.write(content);
             doc.close();
             
+            // Auto-resize iframe podle obsahu
+            setTimeout(() => {
+                try {
+                    const body = previewFrame.contentWindow.document.body;
+                    const html = previewFrame.contentWindow.document.documentElement;
+                    const height = Math.max(
+                        body.scrollHeight, body.offsetHeight,
+                        html.clientHeight, html.scrollHeight, html.offsetHeight
+                    );
+                    // Minimum 350px, maximum podle obsahu
+                    previewFrame.style.height = Math.max(350, height + 32) + 'px';
+                } catch(e) {
+                    console.log('Cannot auto-resize iframe');
+                }
+            }, 100);
+            
             previewActive = true;
         };
 
+        const clearPreview = () => {
+            previewFrame.style.display = 'none';
+            previewFrame.style.height = '350px';
+            previewPlaceholder.style.display = 'flex';
+            previewPlaceholder.textContent = 'Klikni na "Spustit" pro zobrazení výstupu';
+            previewActive = false;
+            
+            // Vyčistit iframe
+            const doc = previewFrame.contentWindow.document;
+            doc.open();
+            doc.write('');
+            doc.close();
+        };
+
         runPreviewBtn.addEventListener('click', runPreview);
+        clearPreviewBtn.addEventListener('click', clearPreview);
 
         // Reset preview when code changes
         const resetPreviewState = () => {
             if (previewActive) {
-                previewFrame.style.display = 'none';
                 previewPlaceholder.style.display = 'flex';
-                previewPlaceholder.textContent = 'Kód změněn - klikni na "Spustit" pro aktualizaci';
-                previewActive = false;
+                previewPlaceholder.textContent = '⚠️ Kód změněn - klikni na "Spustit" pro aktualizaci';
+                previewPlaceholder.style.background = 'rgba(255, 200, 0, 0.1)';
+                // Necháme iframe viditelný, jen zobrazíme upozornění přes něj
             }
         };
 
@@ -1104,10 +1205,7 @@ iframe {
             jsInput.value = "";
             
             // Reset preview
-            previewFrame.style.display = 'none';
-            previewPlaceholder.style.display = 'flex';
-            previewPlaceholder.textContent = 'Klikni na "Spustit" pro zobrazení výstupu';
-            previewActive = false;
+            clearPreview();
             
             document.getElementById('save-snippet-btn').innerHTML = "💾 Uložit";
             document.getElementById('delete-snippet-btn').style.display = "none";
@@ -1218,10 +1316,7 @@ iframe {
                 jsInput.value = data.js || "";
                 
                 // Reset preview state
-                previewFrame.style.display = 'none';
-                previewPlaceholder.style.display = 'flex';
-                previewPlaceholder.textContent = 'Klikni na "Spustit" pro zobrazení výstupu';
-                previewActive = false;
+                clearPreview();
                 
                 document.getElementById('save-snippet-btn').innerHTML = "💾 Aktualizovat";
                 document.getElementById('delete-snippet-btn').style.display = "block";
