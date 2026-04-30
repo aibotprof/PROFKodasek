@@ -699,9 +699,70 @@ iframe#preview-frame {
     color: var(--text-muted);
     font-size: 0.85rem;
 }
+
+/* AUTH MODAL STYLES */
+#auth-modal {
+    z-index: 2000; /* Musí být nad vším ostatním */
+    backdrop-filter: blur(10px);
+    background: rgba(13, 17, 23, 0.9);
+}
+.auth-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: var(--radius);
+    outline: none;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: 0.2s;
+}
+.auth-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+}
+.auth-error {
+    color: #ff7b72;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    display: none;
+    font-weight: 500;
+}
+.logout-btn {
+    margin-top: auto;
+    border-color: #30363d;
+    color: #ff7b72;
+    padding: 10px;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+    width: 100%;
+    border: 1px solid var(--border);
+}
+.logout-btn:hover {
+    background: rgba(255, 123, 114, 0.1);
+    border-color: #ff7b72;
+}
     </style>
 </head>
 <body>
+
+<!-- AUTH MODAL -->
+    <div id="auth-modal" class="modal-overlay open">
+        <div class="modal-card">
+            <div class="logo-icon" style="font-size: 3rem; margin-bottom: 10px;">⚡</div>
+            <h2 style="margin-bottom: 25px;">Přihlášení</h2>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <input type="email" id="auth-email" placeholder="E-mail" class="auth-input">
+                <input type="password" id="auth-password" placeholder="Heslo" class="auth-input">
+                <button id="auth-login-btn" class="btn-global-new" style="margin-bottom: 0;">Přihlásit se</button>
+                <div id="auth-error" class="auth-error">❌ Nesprávný e-mail nebo heslo</div>
+            </div>
+        </div>
+    </div>    
 
     <!-- MODAL -->
     <div id="new-item-modal" class="modal-overlay">
@@ -773,6 +834,12 @@ iframe#preview-frame {
                     <div class="loader">Načítám prompty...</div>
                 </div>
             </div>
+
+<!-- Odhlášení (přidej těsně před </nav>) -->
+            <button id="logout-btn" class="logout-btn">
+                🚪 Odhlásit se
+            </button>
+
         </nav>
 
         <!-- HLAVNÍ OBSAH -->
@@ -896,6 +963,7 @@ iframe#preview-frame {
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDS50ENCdaGoMdCPweuRS7SD6MQaLHc3Bg",
@@ -909,6 +977,58 @@ iframe#preview-frame {
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+                const auth = getAuth(app);
+        
+        const authModal = document.getElementById('auth-modal');
+        const loginBtn = document.getElementById('auth-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const emailInput = document.getElementById('auth-email');
+        const passInput = document.getElementById('auth-password');
+        const authError = document.getElementById('auth-error');
+
+        // Sledování stavu přihlášení
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Uživatel je přihlášen -> schovat modal
+                authModal.classList.remove('open');
+            } else {
+                // Uživatel není přihlášen -> ukázat modal
+                authModal.classList.add('open');
+            }
+        });
+
+        // Funkce pro přihlášení
+        loginBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            const password = passInput.value.trim();
+            
+            if (!email || !password) return;
+
+            loginBtn.innerHTML = "⏳ Přihlašuji...";
+            authError.style.display = 'none';
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                loginBtn.innerHTML = "Přihlásit se";
+                emailInput.value = '';
+                passInput.value = '';
+            } catch (error) {
+                console.error(error);
+                authError.style.display = 'block';
+                loginBtn.innerHTML = "Přihlásit se";
+            }
+        });
+
+        // Podpora přihlášení přes Enter
+        passInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        // Funkce pro odhlášení
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
 
         // State
         let currentTab = 'code';
