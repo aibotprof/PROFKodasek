@@ -987,16 +987,22 @@ iframe#preview-frame {
         const passInput = document.getElementById('auth-password');
         const authError = document.getElementById('auth-error');
 
-        // Sledování stavu přihlášení
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Uživatel je přihlášen -> schovat modal
-                authModal.classList.remove('open');
-            } else {
-                // Uživatel není přihlášen -> ukázat modal
-                authModal.classList.add('open');
-            }
-        });
+    // Sledování stavu přihlášení
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Uživatel je přihlášen -> schovat modal a načíst data!
+                    authModal.classList.remove('open');
+                    startDatabaseListeners(); // 👈 PŘIDÁNO TOTO
+                } else {
+                    // Uživatel není přihlášen -> ukázat modal
+                    authModal.classList.add('open');
+                    
+                    // Když se odhlásíš, schováme data z obrazovky
+                    codeList.innerHTML = '<div class="loader">Přihlaste se pro zobrazení...</div>';
+                    promptList.innerHTML = '<div class="loader">Přihlaste se pro zobrazení...</div>';
+                    dbListenersActive = false; // Reset listenerů
+                }
+            });
 
         // Funkce pro přihlášení
         loginBtn.addEventListener('click', async () => {
@@ -1486,20 +1492,28 @@ iframe#preview-frame {
             });
         };
 
-        // Data Listeners
-        onValue(ref(db, 'codes'), (snap) => {
-            allCodes = snap.val() 
-                ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
-                : [];
-            if(currentTab === 'code') renderList(allCodes, codeList, 'code', searchCodeInput.value);
-        });
+        // Data Listeners zpožděné až po přihlášení
+        let dbListenersActive = false;
 
-        onValue(ref(db, 'prompts'), (snap) => {
-            allPrompts = snap.val() 
-                ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
-                : [];
-            if(currentTab === 'prompts') renderList(allPrompts, promptList, 'prompt', searchPromptInput.value);
-        });
+        const startDatabaseListeners = () => {
+            if (dbListenersActive) return; // Zabrání vícenásobnému spuštění
+            dbListenersActive = true;
+
+            onValue(ref(db, 'codes'), (snap) => {
+                allCodes = snap.val() 
+                    ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
+                    : [];
+                if(currentTab === 'code') renderList(allCodes, codeList, 'code', searchCodeInput.value);
+            });
+
+            onValue(ref(db, 'prompts'), (snap) => {
+                allPrompts = snap.val() 
+                    ? Object.entries(snap.val()).map(([k, v]) => ({id: k, ...v})).sort((a, b) => b.createdAt - a.createdAt) 
+                    : [];
+                if(currentTab === 'prompts') renderList(allPrompts, promptList, 'prompt', searchPromptInput.value);
+            });
+        };
+
     </script>
 </body>
 </html>
